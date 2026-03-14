@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea, #764ba2, #ff758c, #43cea2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: Arial, sans-serif;
+    }
+
+    .login-box {
+      background: rgba(255, 255, 255, 0.92);
+      padding: 30px;
+      border-radius: 20px;
+      width: 340px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      text-align: center;
+    }
+
+    h1 {
+      margin-top: 0;
+      color: #00a7f4;
+      margin-bottom: 20px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      outline: none;
+      font-size: 14px;
+    }
+
+    input:focus {
+      border-color: #667eea;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 12px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(90deg, #ff758c, #667eea);
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      opacity: 0.92;
+    }
+
+    #res {
+      margin-top: 12px;
+      min-height: 22px;
+      font-weight: bold;
+      color: red;
+      font-size: 14px;
+    }
+
+    #success {
+      color: green;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <h1>Login</h1>
+
+    <form id="loginForm">
+      <input id="age" type="number" placeholder="Enter age" />
+      <input id="mail" type="text" placeholder="Enter Gmail" />
+      <input id="name" type="text" placeholder="Enter name" />
+      <input id="password" type="password" placeholder="Enter password" />
+      <p id="res"></p>
+      <button type="submit">Login</button>
+    </form>
+  </div>
+
+  <script>
+    document.getElementById("loginForm").addEventListener("submit", function (event) {
+      event.preventDefault();
+
+      const age = document.getElementById("age").value.trim();
+      const mail = document.getElementById("mail").value.trim();
+      const name = document.getElementById("name").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const res = document.getElementById("res");
+
+      res.innerText = "";
+      res.id = "res";
+
+      if (age === "" || isNaN(age)) {
+        res.innerText = "Please enter your age";
+        return;
+      }
+
+      if (Number(age) < 15) {
+        res.innerText = "Age must be 15 or older";
+        return;
+      }
+
+      const gmailPattern = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+      if (!gmailPattern.test(mail)) {
+        res.innerText = "Enter a valid Gmail address";
+        return;
+      }
+
+      const namePattern = /^[A-Za-z\s]+$/;
+      if (!namePattern.test(name)) {
+        res.innerText = "Name must contain letters only";
+        return;
+      }
+
+      if (password.length < 9) {
+        res.innerText = "Password must be at least 9 characters";
+        return;
+      }
+
+      res.id = "success";
+      res.innerText = "Login successful";
+
+      setTimeout(function () {
+        window.location.href = "sham.html";
+      }, 800);
+    });
+  </script>
+</body>
+</html>

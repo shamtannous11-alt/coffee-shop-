@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Online Cashier</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #fceabb, #f8b500, #d35400);
+      background-size: 600% 600%;
+      animation: gradientBG 15s ease infinite;
+      min-height: 100vh;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      background: rgba(50, 30, 10, 0.78);
+      border-radius: 20px;
+      box-shadow: 0 0 25px rgba(0,0,0,0.35);
+      padding: 28px;
+      color: white;
+    }
+
+    h1, h2 {
+      margin-top: 0;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 24px;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 18px;
+    }
+
+    .fields {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 12px;
+      border-radius: 12px;
+      border: none;
+      font-size: 15px;
+      margin-top: 6px;
+    }
+
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    .menu-item {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 10px;
+      align-items: center;
+      padding: 12px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.08);
+      margin-bottom: 10px;
+    }
+
+    .menu-item input {
+      width: 70px;
+      text-align: center;
+      margin-top: 0;
+    }
+
+    .summary-line, .order-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .total {
+      font-size: 1.3rem;
+      font-weight: bold;
+      margin-top: 14px;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    button, .back-btn {
+      padding: 12px 18px;
+      border: none;
+      border-radius: 12px;
+      background: #f39c12;
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: 0.3s;
+    }
+
+    button:hover, .back-btn:hover {
+      background: #e67e22;
+      transform: scale(1.03);
+    }
+
+    .message {
+      margin-top: 14px;
+      font-weight: bold;
+      min-height: 24px;
+    }
+
+    .orders-list {
+      max-height: 500px;
+      overflow: auto;
+    }
+
+    .saved-order {
+      background: rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .muted {
+      color: #ffe7b0;
+      font-size: 14px;
+    }
+
+    @media (max-width: 900px) {
+      .grid, .fields {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧾 Online Cashier</h1>
+    <div class="grid">
+      <div>
+        <div class="card">
+          <h2>Customer Details</h2>
+          <div class="fields">
+            <label>
+              Customer Name
+              <input type="text" id="customerName" placeholder="Enter customer name" />
+            </label>
+            <label>
+              Phone
+              <input type="text" id="phone" placeholder="Enter phone number" />
+            </label>
+            <label>
+              Order Type
+              <select id="orderType">
+                <option value="Takeaway">Takeaway</option>
+                <option value="Delivery">Delivery</option>
+                <option value="Table">Table</option>
+              </select>
+            </label>
+            <label>
+              Table / Address
+              <input type="text" id="location" placeholder="Table number or address" />
+            </label>
+          </div>
+          <label style="margin-top:12px;">
+            Notes
+            <textarea id="notes" placeholder="Extra notes..."></textarea>
+          </label>
+        </div>
+
+        <div class="card">
+          <h2>Menu</h2>
+          <div id="menuList"></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <h2>Order Summary</h2>
+          <div id="summary"></div>
+          <div class="total" id="total">Total: $0</div>
+          <div class="buttons">
+            <button id="saveBtn">Save Order</button>
+            <button id="clearBtn" type="button">Clear</button>
+            <a class="back-btn" href="work.html">Back to Hub</a>
+          </div>
+          <div class="message" id="message"></div>
+        </div>
+
+        <div class="card">
+          <h2>Saved Orders</h2>
+          <div class="orders-list" id="ordersList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000";
+
+    const menuItems = [
+      { name: 'Espresso', price: 3 },
+      { name: 'Cappuccino', price: 5 },
+      { name: 'Latte', price: 6 },
+      { name: 'Americano', price: 4 },
+      { name: 'Iced Coffee', price: 5 },
+      { name: 'Mojito', price: 7 },
+      { name: 'Chocolate Cake', price: 8 },
+      { name: 'Cheesecake', price: 9 },
+      { name: 'Brownie', price: 4 },
+      { name: 'Croissant', price: 3 }
+    ];
+
+    const menuList = document.getElementById('menuList');
+    const summary = document.getElementById('summary');
+    const totalEl = document.getElementById('total');
+    const messageEl = document.getElementById('message');
+    const ordersList = document.getElementById('ordersList');
+
+    function renderMenu() {
+      menuList.innerHTML = menuItems.map((item, index) => `
+        <div class="menu-item">
+          <div>${item.name}</div>
+          <div>$${item.price}</div>
+          <input type="number" min="0" value="0" data-index="${index}" class="qty-input" />
+        </div>
+      `).join('');
+
+      document.querySelectorAll('.qty-input').forEach(input => {
+        input.addEventListener('input', updateSummary);
+      });
+    }
+
+    function getSelectedItems() {
+      return [...document.querySelectorAll('.qty-input')]
+        .map(input => {
+          const index = Number(input.dataset.index);
+          const quantity = Number(input.value) || 0;
+          const item = menuItems[index];
+          return {
+            name: item.name,
+            price: item.price,
+            quantity,
+            total: item.price * quantity
+          };
+        })
+        .filter(item => item.quantity > 0);
+    }
+
+    function updateSummary() {
+      const items = getSelectedItems();
+      const total = items.reduce((sum, item) => sum + item.total, 0);
+
+      if (items.length === 0) {
+        summary.innerHTML = '<div class="muted">No items selected yet.</div>';
+      } else {
+        summary.innerHTML = items.map(item => `
+          <div class="summary-line">
+            <span>${item.name} x ${item.quantity}</span>
+            <span>$${item.total}</span>
+          </div>
+        `).join('');
+      }
+
+      totalEl.textContent = `Total: $${total}`;
+    }
+
+    function clearForm() {
+      document.getElementById('customerName').value = '';
+      document.getElementById('phone').value = '';
+      document.getElementById('location').value = '';
+      document.getElementById('notes').value = '';
+      document.getElementById('orderType').value = 'Takeaway';
+      document.querySelectorAll('.qty-input').forEach(input => input.value = 0);
+      updateSummary();
+    }
+
+    async function loadOrders() {
+      try {
+        const response = await fetch(`${API_BASE}/api/orders`);
+        const orders = await response.json();
+
+        if (!Array.isArray(orders) || orders.length === 0) {
+          ordersList.innerHTML = '<div class="muted">No saved orders yet.</div>';
+          return;
+        }
+
+        ordersList.innerHTML = orders.map(order => `
+          <div class="saved-order">
+            <div><strong>${order.customerName}</strong> — ${order.orderType}</div>
+            <div class="muted">${new Date(order.createdAt).toLocaleString()}</div>
+            <div class="muted">Phone: ${order.phone || '-'} | Place: ${order.location || '-'}</div>
+            <div style="margin-top:8px;">
+              ${order.items.map(item => `<div class="order-line"><span>${item.name} x ${item.quantity}</span><span>$${item.total}</span></div>`).join('')}
+            </div>
+            <div class="total">Total: $${order.total}</div>
+          </div>
+        `).join('');
+      } catch (error) {
+        ordersList.innerHTML = '<div class="muted">Could not load orders. Make sure server.js is running.</div>';
+      }
+    }
+
+    async function saveOrder() {
+      const customerName = document.getElementById('customerName').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const location = document.getElementById('location').value.trim();
+      const orderType = document.getElementById('orderType').value;
+      const notes = document.getElementById('notes').value.trim();
+      const items = getSelectedItems();
+
+      if (!customerName) {
+        messageEl.textContent = 'Please enter the customer name.';
+        return;
+      }
+
+      if (items.length === 0) {
+        messageEl.textContent = 'Please choose at least one item.';
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE}/api/orders`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customerName,
+            phone,
+            location,
+            orderType,
+            notes,
+            items
+          })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          messageEl.textContent = result.error || 'Could not save order.';
+          return;
+        }
+
+        messageEl.textContent = 'Order saved successfully.';
+        clearForm();
+        loadOrders();
+      } catch (error) {
+        messageEl.textContent = 'Server connection failed. Run node server.js first.';
+      }
+    }
+
+    document.getElementById('saveBtn').addEventListener('click', saveOrder);
+    document.getElementById('clearBtn').addEventListener('click', clearForm);
+
+    renderMenu();
+    updateSummary();
+    loadOrders();
+  </script>
+</body>
+</html>
